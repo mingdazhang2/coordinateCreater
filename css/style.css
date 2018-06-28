@@ -452,9 +452,14 @@ input, textarea, #urlMessage p {
 #dots{
 	display: flex;
 		flex-direction:column;
-
-
 }
+.panel, .label {
+	width:7rem;
+	height:1rem;
+	
+	position:absolute;
+	}
+.
 /* info-icon & info-text */
 #info {
 	position: fixed;

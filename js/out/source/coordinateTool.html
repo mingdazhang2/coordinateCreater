@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/***********************************************************************
+</span>* FILENAME : coordinate_tool.js 
+* 
+* Loaded by : index.html PATH
+* 
+*
+* DESCRIPTION :
+*       A tool for gernerating coordinates of points or label boxes on a loaded picture. 
+*
+* PUBLIC FUNCTIONS :
+*      @return int     drawBox(x,y)
+*       int     FM_DecompressFile( FileHandle )
+*
+* NOTES :
+*       
+*       support by jquery.
+*
+*       Copyright .  All rights reserved.
+* 
+* AUTHOR :    Daming Zhang        START DATE :    14 Aug 2017
+*
+* LAST CHANGES : Daming Zhang     DATE : 23 Aug 2017
+*
+* 
+*
+**/
+
+
+$(document).ready(function(){
+
+	// Preloading Images
+	$.preloadImages = function() {
+		for(var i = 0; i&lt;arguments.length; i++) {
+			$(&#39;&lt;img&gt;&#39;).attr(&#39;src&#39;, arguments[i]);
+		}
+	}
+	$.preloadImages(&#39;images/logo_active.png&#39;);
+
+	// Crypt Mail
+	function UnCryptMailto( s )
+	{
+		var n = 0;
+		var r = &#39;&#39;;
+		for( var i = 0; i &lt; s.length; i++)
+		{
+			n = s.charCodeAt( i );
+			if( n &gt;= 8364)
+				n = 128;
+			r += String.fromCharCode( n - 1 );
+		}
+		return r;
+	}
+	var key = &#39;nbjmnfAebsjpepnj/ef&#39;;
+	var emailHtml = &#39;&lt;a href=&quot;&#39;+UnCryptMailto(&#39;nbjmup;&#39;) + UnCryptMailto(key)+&#39;&quot;&gt;&#39; + UnCryptMailto(key) + &#39;&lt;/a&gt;&#39;;
+	$(&#39;.email&#39;).html(emailHtml);
+	$(&#39;#social a.feedback&#39;).attr(&#39;href&#39;, UnCryptMailto(&#39;nbjmup;&#39;) + UnCryptMailto(key));
+
+	// Check if Browser has Flash activated
+	var useFlash = false;
+	try
+	{
+		var fo = new ActiveXObject(&#39;ShockwaveFlash.ShockwaveFlash&#39;);
+		if (fo)
+		{
+			useFlash = true;
+		}
+	}
+	catch (e)
+	{
+		if (navigator.mimeTypes
+		&amp;&amp; navigator.mimeTypes[&#39;application/x-shockwave-flash&#39;] != undefined
+		&amp;&amp; navigator.mimeTypes[&#39;application/x-shockwave-flash&#39;].enabledPlugin) {
+			useFlash = true;
+		}
+	}
+
+	// Check if IE
+	//if(navigator.appName.indexOf(&quot;Internet Explorer&quot;) != -1 || navigator.userAgent.toLowerCase().indexOf(&#39;msie&#39;) != -1)
+		//useFlash = false;
+
+	// deactivate flash switch if browser don&#39;t support flash or is IE
+	if(useFlash == false)
+		$(&#39;#flashUploadSwitch&#39;).hide();
+
+	// Switch -&gt; Flash Upload
+	var uploadHtml5Drag = true;
+	var uploadSwitchAllowed = true;
+	$(&#39;#flashUploadSwitch&#39;).click(function(e) {
+		if(uploadSwitchAllowed)
+		{
+			uploadSwitchAllowed = false;
+			if(uploadHtml5Drag)
+			{
+				$(&#39;#uploadForm&#39;).slideUp(400, function() {
+					$(&#39;#flashUploadSwitch&#39;).find(&#39;.flash&#39;).hide().next().show();
+					$(&#39;#flashUpload&#39;).slideDown(400, function() {
+						uploadHtml5Drag = false;
+						uploadSwitchAllowed = true;
+					});
+				});
+			} else {
+				$(&#39;#flashUpload&#39;).slideUp(400, function() {
+					$(&#39;#flashUploadSwitch&#39;).find(&#39;.flash&#39;).show().next().hide();
+					$(&#39;#uploadForm&#39;).slideDown(400, function() {
+						uploadHtml5Drag = true;
+						uploadSwitchAllowed = true;
+					});
+				});
+			}
+		}
+		e.preventDefault();
+	});
+
+	// Set Content Width exactly same with Navi Width
+	var width = $(&#39;#navi ul&#39;).width() - $(&#39;#navi ul a&#39;).css(&#39;margin-left&#39;).split(&#39;px&#39;)[0] - $(&#39;#navi ul a&#39;).css(&#39;margin-right&#39;).split(&#39;px&#39;)[0];
+	$(&#39;.infobox&#39;).width(width + &#39;px&#39;);
+
+	// Top Navigation
+	$(&#39;#navi a, a[rel^=&quot;#&quot;]&#39;).click(function(e) {
+		var current = $(&#39;#navi&#39;).attr(&#39;currentValue&#39;);
+		var rel = $(this).attr(&#39;rel&#39;);
+		$(&#39;#navi&#39;).attr(&#39;currentValue&#39;, rel);
+		//if($(this).css(&#39;display&#39;) != &#39;block&#39;)
+		$(current).slideUp(400, function() {
+			$(rel).slideDown(400, function() {
+				resizeHtml();
+				if(rel == &#39;#imagemap4posis&#39;)
+					$(&#39;#dots&#39;).show();
+			});
+			resizeHtml();
+		});
+		if(current == &#39;#imagemap4posis&#39;)
+			$(&#39;#dots&#39;).hide();
+		e.preventDefault();
+	});
+
+	// Logo
+	$(&#39;#logo&#39;).hover(function() {
+		$(this).attr(&#39;src&#39;, &#39;images/logo_active.png&#39;);
+	}, function() {
+		$(this).attr(&#39;src&#39;, &#39;images/logo.png&#39;);
+	});
+
+	resizeUploadContainer();
+
+	// set a coordinate point
+	$(&#39;#mapContainer&#39;).click(function(e) {
+		setCoordinates(e, 1);
+		e.preventDefault();
+	});
+
+	// ...
+	$(&#39;#newUpload span, .textareaButton3&#39;).click(function(e) {
+		// $(&#39;#dots&#39;).hide();
+		// $(&#39;#navi&#39;).attr(&#39;currentValue&#39;, &#39;#upload&#39;);
+
+  //       // scroll window top
+  //       $(&#39;html, body&#39;).animate({ scrollTop: 0 }, 200);
+
+  //       // change view
+		// $(&#39;#imagemap4posis&#39;).slideUp(400, function() {
+		// 	$(&#39;#upload&#39;).slideDown(400, function() {
+		// 		resizeHtml();
+		// 	});
+		// });
+		window.location.reload();
+	});
+
+<span id='global-property-'>	/**
+</span>	* 
+	*
+	*/
+	$(&#39;#urlMessage a&#39;).click(function(e) {
+		alert(1)
+		$(&#39;#dots&#39;).empty();
+		$(&#39;#imagemap4posis #mapContainer&#39;).find(&#39;img&#39;).attr(&#39;src&#39;, &#39;#&#39;);
+		$(&#39;#navi&#39;).attr(&#39;currentValue&#39;, &#39;#upload&#39;);
+		$(&#39;#imagemap4posis&#39;).slideUp(400, function() {
+			$(&#39;#upload&#39;).slideDown(400, function() {
+				resizeHtml();
+			});
+			removeErrorMessage();
+		});
+		e.preventDefault();
+	});
+
+	// ...
+	$(&#39;#uploadUndo, #uploadUndo2&#39;).click(function(e) {
+		$(&#39;#upload&#39;).slideUp(400, function() {
+			if($(&#39;#imagemap4posis #mapContainer&#39;).find(&#39;img&#39;).attr(&#39;src&#39;) == &#39;#&#39;) {
+				$(&#39;#upload&#39;).slideDown(400);
+				$(&#39;#navi&#39;).attr(&#39;currentValue&#39;, &#39;#upload&#39;);
+			} else {
+				$(&#39;#navi&#39;).attr(&#39;currentValue&#39;, &#39;#imagemap4posis&#39;);
+				$(&#39;#imagemap4posis&#39;).slideDown(400, function() {
+					resizeHtml();
+					$(&#39;#dots&#39;).show();
+				});
+			}
+		});
+	});
+
+	// insert image path via url
+	$(&#39;#linkform&#39;).submit(function(e) {
+		enterImagelinkForm();
+		e.preventDefault();
+	});
+	$(&#39;.imageurl_submit&#39;).click(function(e) {
+		enterImagelinkForm();
+		e.preventDefault();
+	});
+
+	// ...
+	$(&#39;#imageurl&#39;).focusout(function() {
+		var val = $(&#39;#imageurl&#39;).val().trim();
+		if(val !=  &#39;&#39;)
+			$(this).addClass(&#39;active&#39;);
+		else
+			$(this).removeClass(&#39;active&#39;);
+	});
+
+	// Imagemap Generator Buttons
+	$(&#39;.clearButton&#39;).click(addArea);
+
+	function addArea() {
+		console.log(&#39;addarea()&#39;)
+		$(&#39;#coordsText&#39;).val(&#39;&#39;);
+	}
+
+	// delete the last point or box 
+	$(&#39;.clearCurrentButton&#39;).click(removeLast);
+
+	function removeLast() {
+		console.log(&#39;removelast()&#39;)
+		var coordsContent = $(&#39;#coordsText&#39;).val().split(&#39;,&#39;);
+		coordsContent = coordsContent.slice(0,coordsContent.length-1)
+		$(&#39;#coordsText&#39;).val(coordsContent)
+		$(&#39;.dot:last&#39;).remove();
+		//$(&#39;#mapContainer&#39;).find(&#39;area:last&#39;).remove();
+		//hightlight();
+
+		// update textarea
+
+		var textareaVal = $(&#39;#areaText&#39;).val();
+		var tmpArr = textareaVal.split(&#39;\n&#39;);
+		textareaVal = tmpArr.slice(0,tmpArr.length-1).toString();
+		textareaVal=textareaVal.replace(/,/g,&#39;\n&#39;);
+		//textarea = textareaVal.replace(&#39;&lt;area&#39; + lastCoords+&#39;/&gt;\n    &#39;, &#39;&#39;);
+		$(&#39;#areaText&#39;).val(textareaVal);
+
+		// var textareaVal = $(&#39;#areaText&#39;).val();
+		// var tmpArr = textareaVal.split(&#39;&lt;area&#39;);
+		// var lastCoords = tmpArr[tmpArr.length - 1].split(&#39;/&gt;&#39;)[0];
+		// textarea = textareaVal.replace(&#39;&lt;area&#39; + lastCoords+&#39;/&gt;\n    &#39;, &#39;&#39;);
+		// $(&#39;#areaText&#39;).val(textarea);
+	}
+
+	// keyboard support
+	document.addEventListener(&#39;keydown&#39;, function (e) {
+		console.log(e.keyCode);
+		switch (e.keyCode) {
+			case 65:
+				addArea();
+				break;
+
+			case 90:
+				removeLast();
+				break;
+		}
+	}, false);
+
+	// Clearn All points and labels button
+	$(&#39;.clearAllButton&#39;).click(function() {
+		$(&#39;#coordsText&#39;).val(&#39;&#39;);
+		$(&#39;#areaText&#39;).val(&#39;&#39;);
+		$(&#39;#mapContainer&#39;).find(&#39;map&#39;).empty();
+		$(&#39;.dot&#39;).remove();
+	//	hightlight();
+		textarea = &quot;&quot;;
+	});
+
+	var timeoutIdShow = 0
+	var timeoutIdHide = 0
+
+	$(&#39;#info&#39;).mouseover(function() {
+		clearTimeout(timeoutIdHide);
+		timeoutIdShow = setTimeout(function() {
+			$(&#39;#infotext&#39;).stop(true, true).show(200);
+			$(&#39;#info&#39;).stop(true, true).animate({opacity: 1}, 200);
+		}, 200);
+	});
+	$(&#39;#infotext&#39;).mouseover(function() {
+		clearTimeout(timeoutIdHide);
+	});
+	$(&#39;#infotext&#39;).mouseleave(function() {
+		clearTimeout(timeoutIdShow);
+		timeoutIdHide = setTimeout(function() {
+			$(&#39;#infotext&#39;).stop(true, true).hide(200);
+			$(&#39;#info&#39;).stop(true, true).animate({opacity: 0.5}, 200);
+		}, 200);
+	});
+
+	// show donate popup
+	setTimeout(function() {
+		$(&#39;#feedbackPopup&#39;).slideDown(400);
+	}, 10000);
+    $(&#39;#social&#39;).hover(function() {
+        $(&#39;#feedbackPopup&#39;).slideDown(400);
+    });
+
+	// close donate popup
+	$(&#39;#feedbackPopup a&#39;).click(&#39;a&#39;, function(e) {
+		$(&#39;#feedbackPopup&#39;).slideUp(400);
+		e.preventDefault();
+	});
+
+	// donate close-button fadeIn &amp; fadeOut
+	var timeoutIdHideBtn = 0
+	$(&#39;#feedbackPopup&#39;).mouseover(function() {
+		clearTimeout(timeoutIdHideBtn);
+		$(&#39;#feedbackPopup a&#39;).show();
+	});
+	$(&#39;#feedbackPopup&#39;).mouseout(function() {
+		timeoutIdHideBtn = setTimeout(function() {
+			$(&#39;#feedbackPopup a&#39;).hide();
+		}, 100);
+	});
+	$(&#39;#feedbackPopup a&#39;).mouseover(function() {
+		clearTimeout(timeoutIdHideBtn);
+	});
+	$(&#39;#feedbackPopup a&#39;).mouseout(function() {
+		clearTimeout(timeoutIdHideBtn);
+	});
+});
+function drawBox(x,y){
+	
+	var offset = $(&#39;#mapContainer&#39;).offset();
+	var imgOffset = $(&#39;#imagemap4posis img&#39;).offset();
+	var gapX = parseInt(imgOffset.left)-parseInt(offset.left)
+	//var gapY = parseInt(imgOffset.top)-parseInt(offset.top)
+	var imgWidth=$(&#39;#imagemap4posis img&#39;).width()
+	
+	//var labelWidth =$(&quot;.label&quot;)[0].width()
+	$(&quot;.panel&quot;).remove()
+	var dotsWidth =$(&#39;#mapContainer&#39;).width()
+	var dotsHeight =$(&#39;#mapContainer&#39;).height()
+	x -= parseInt(offset.left);
+	y -= parseInt(offset.top);
+	 
+	if(x &lt; gapX) { 
+		x =0; 
+	}
+/*	else if(x&lt;imgWidth){
+		x= imgWidth+8+gapX	
+	}*/
+	else if(x&gt;(imgWidth+8+gapX)){
+		x=imgWidth+8+gapX	
+	}
+	if(y &lt; 0) { y = 0; }
+	$(&#39;#mapContainer&#39;).append(&#39;&lt;div class= &quot;dot label&quot; contenteditable=&quot;true&quot; style=&quot;left: &#39;+ (x)/dotsWidth*100 +&#39;%; top: &#39;+ (y)/dotsHeight*100 +&#39;%; border: 2px solid green;&quot;&gt;&lt;/div&gt;&#39;)
+	type = &#39;box&#39;
+	
+	
+	
+	//var value = $(&#39;#coordsText&#39;).val();
+	if(value == &#39;&#39;||typeof value==null) {
+		value = (x-gapX)+&#39;.&#39;+y;
+		areaValue=&quot;&lt;question labelx=&#39;&quot;+(x-gapX)+&quot;&#39; labely=&#39;&quot;+y+&quot;&#39;&gt;&quot;+&quot;&quot;+&quot;&lt;/question&gt;&lt;answer&gt;&quot;+&quot;&quot;+&quot;&lt;/answer&gt;&quot;
+		coordsLength = value.length;
+		counter++;
+	} else {
+		value = value+&#39;,&#39;+(x-gapX)+&#39;.&#39;+y;
+		areaValue = areaValue + &#39;\n&#39; + &quot;&lt;question labelx=&#39;&quot;+(x-gapX)+&quot;&#39; labely=&#39;&quot;+y+&quot;&#39;&gt;&quot;+&quot;&quot;+&quot;&lt;/question&gt;&lt;answer&gt;&quot;+&quot;&quot;+&quot;&lt;/answer&gt;&quot;
+		coordsLength = value.length;
+	}	
+	//if(status)
+		$(&#39;#coordsText&#39;).val(value);
+		$(&#39;#areaText&#39;).val(areaValue)
+		$(&#39;#mapContainer&#39;).append($(&#39;.imgmapMainImage&#39;));
+//	$(&#39;#mapContainer&#39;).children(&#39;div&#39;).remove();
+	$(&#39;.imgmapMainImage&#39;).removeClass(&#39;maphilighted&#39;);
+	$(&#39;canvas&#39;).remove();
+}
+function drawPoint(x,y){
+	
+	$(&quot;.panel&quot;).remove()
+	
+	//var value = $(&#39;#coordsText&#39;).val();
+	var offset = $(&#39;#mapContainer&#39;).offset();
+	var imgOffset = $(&#39;#imagemap4posis img&#39;).offset();
+	var gapX = parseInt(imgOffset.left)-parseInt(offset.left)
+	//var gapY = parseInt(imgOffset.top)
+	var imgWidth=$(&#39;#imagemap4posis img&#39;).width()
+	
+	var dotsWidth =$(&#39;#mapContainer&#39;).width()
+	var dotsHeight =$(&#39;#mapContainer&#39;).height()
+	x -= parseInt(offset.left);
+	y -= parseInt(offset.top);
+	alert(x)
+	alert(gapX)
+	alert(x-gapX)
+	if(x &lt; gapX||x &gt;imgWidth+gapX) { alert(&quot;You can&#39;t set a point out of the picture&quot;) }
+	else{
+			$(&#39;#mapContainer&#39;).append(&#39;&lt;img class=&quot;dot&quot; src=&quot;images/dot.png&quot; style=&quot;left: &#39;+ (x)/dotsWidth*100 +&#39;%; top: &#39;+ (y)/dotsHeight*100 +&#39;%;&quot; /&gt;&#39;);
+	type = &#39;point&#39;;
+	if(value == &#39;&#39;||typeof value==null) {
+		value = (x-gapX)+&#39;.&#39;+(y);
+		areaValue=&quot;targetx=&#39;&quot; + (x-gapX) + &quot;&#39; targety=&#39;&quot; + (y) +&quot;&#39;&quot;;
+		coordsLength = value.length;
+		counter++;
+	} else {
+		value = value+&#39;,&#39;+(x-gapX)+&#39;.&#39;+(y);
+		areaValue = areaValue + &#39;\n&#39; + &quot;targetx=&#39;&quot; + (x-gapX) + &quot;&#39; targety=&#39;&quot; + (y) +&quot;&#39;&quot;
+		coordsLength = value.length;
+	}
+	}
+
+	//	if(status)
+		$(&#39;#coordsText&#39;).val(value);
+		$(&#39;#areaText&#39;).val(areaValue)
+		
+		$(&#39;#mapContainer&#39;).append($(&#39;.imgmapMainImage&#39;));
+//	$(&#39;#mapContainer&#39;).children(&#39;div&#39;).remove();
+	$(&#39;.imgmapMainImage&#39;).removeClass(&#39;maphilighted&#39;);
+	$(&#39;canvas&#39;).remove();
+	
+}
+function cancel(){
+	$(&quot;.panel&quot;).remove()
+	}
+
+$(window).resize(function() {
+	resizeUploadContainer();
+});
+
+var counter = 1;
+var coordsLength = 0;
+var textarea = &#39;&#39;;
+var type=&#39;&#39;;
+var value = &#39;&#39;
+var areaValue = &#39;&#39;;
+function setCoordinates(e, status) {
+	$(&quot;.panel&quot;).remove();
+	value = $(&#39;#coordsText&#39;).val();
+	areaValue = $(&#39;#areaText&#39;).val();
+	var x = e.pageX;
+	var y = e.pageY;
+	
+	
+	$(&#39;#dots&#39;).append(&#39;&lt;div class= &quot;panel&quot; style=&quot;left: &#39;+ (x-1) +&#39;px; top: &#39;+ (y-1) +&#39;px;&quot;&gt;&lt;button class=&quot;option&quot; onclick=&quot;drawBox(&#39;+x+&#39;,&#39;+y+&#39;)&quot;&gt;Box&lt;/button&gt;&lt;button class=&quot;option&quot; onclick=&quot;drawPoint(&#39;+x+&#39;,&#39;+y+&#39;)&quot;&gt;Point&lt;/button&gt;&lt;button class=&quot;option&quot; onclick=&quot;cancel()&quot;&gt;Cancel&lt;/button&gt;&lt;/div&gt;&#39;)
+	//$(&#39;#dots&#39;).append(&#39;&lt;img class=&quot;dot&quot; src=&quot;images/dot.png&quot; style=&quot;left: &#39;+ (x-1) +&#39;px; top: &#39;+ (y-1) +&#39;px;&quot; /&gt;&#39;);
+
+
+
+}
+	
+	//var areaValue = $(&#39;#areaText&#39;).val();
+/*	if(value == &#39;&#39;) {
+		value = x+&#39;.&#39;+y;
+		//areaValue = &quot;targetx=&#39;&quot; + x + &quot;&#39; targety=&#39;&quot; + y +&quot;&#39;&quot;
+		coordsLength = value.length;
+		counter++;
+	} else {
+		value = value+&#39;,&#39;+x+&#39;.&#39;+y;
+		areaValue = areaValue + &#39;\n&#39; + &quot;targetx=&#39;&quot; + x + &quot;&#39; targety=&#39;&quot; + y +&quot;&#39;&quot;
+		coordsLength = value.length;
+	}*/
+//	if(status)
+//		$(&#39;#coordsText&#39;).val(value);
+//		$(&#39;#areaText&#39;).val(areaValue);
+
+	// if($(&#39;#area&#39;+counter).length != 0)
+	// 	$(&#39;#area&#39;+counter).remove();
+	// var countKomma = value.split(&#39;,&#39;).length;
+	// var shape = (countKomma &lt;= 4) ? &#39;rect&#39; : &#39;poly&#39;;
+	// if(countKomma &gt;= 4) {
+	// 	var html = &#39;&lt;area shape=&quot;&#39;+shape+&#39;&quot; id=&quot;area&#39;+counter+&#39;&quot; class=&quot;area&quot; coords=&quot;&#39;+value+&#39;&quot; href=&quot;#&quot; alt=&quot;&quot; title=&quot;&quot;&gt;&#39;;
+	// 	$(&#39;map&#39;).append(html);
+	// }
+
+//	$(&#39;#mapContainer&#39;).append($(&#39;.imgmapMainImage&#39;));
+//	$(&#39;#mapContainer&#39;).children(&#39;div&#39;).remove();
+//	$(&#39;.imgmapMainImage&#39;).removeClass(&#39;maphilighted&#39;);
+//	$(&#39;canvas&#39;).remove();
+
+	//hightlight();
+
+	// var area = &#39;&lt;area alt=&quot;&quot; title=&quot;&quot; href=&quot;#&quot; shape=&quot;&#39;+shape+&#39;&quot; coords=&quot;&#39;+value+&#39;&quot; /&gt;\n&#39;;
+	//var textarea = $(&#39;#areaText&#39;).val();
+	// if(textarea == &#39;&#39;)
+	// {
+	// 	// create textarea context
+	// 	textarea = &#39;&lt;img src=&quot;url/to/your/image.jpg&quot; alt=&quot;&quot; usemap=&quot;#Map&quot; /&gt;\n&#39;
+	// 			+ &#39;&lt;map name=&quot;Map&quot; id=&quot;Map&quot;&gt;\n&#39;
+	// 			+ &#39;    &#39; + area
+	// 			+ &#39;    [...]\n&#39;
+	// 			+ &#39;&lt;/map&gt;&#39;;
+	// }
+	// else
+	// {
+	// 	if(countKomma == 2)
+	// 	{
+	// 		// new &lt;area&gt; context
+	// 		textarea = textarea.replace(&#39;[...]&#39;, area + &#39;    [...]&#39;);
+	// 	}
+	// 	else
+	// 	{
+	// 		// edit / update &lt;area&gt; context
+	// 		var arr = value.split(&#39;,&#39;);
+	// 		var oldCoor = &#39;&#39;;
+	// 		for(var i = 0; i &lt; arr.length -2; i++)
+	// 		{
+	// 			if(i &gt;= 1)
+	// 				oldCoor += &#39;,&#39;;
+	// 			oldCoor += arr[i];
+	// 		}
+	// 		textarea = textarea.replace(&#39;shape=&quot;rect&quot; coords=&quot;&#39;+oldCoor, &#39;shape=&quot;&#39;+shape+&#39;&quot; coords=&quot;&#39;+oldCoor);
+	// 		textarea = textarea.replace(oldCoor, value);
+	// 	}
+	// }
+	// $(&#39;#areaText&#39;).val(textarea);
+
+function hightlight() {
+	$(&#39;.imgmapMainImage&#39;).maphilight({
+		strokeColor: &#39;4F95EA&#39;,
+		alwaysOn: true,
+		fillColor: &#39;365E71&#39;,
+		fillOpacity: 0.2,
+		shadow: true,
+		shadowColor: &#39;000000&#39;,
+		shadowRadius: 5,
+		shadowOpacity: 0.6,
+		shadowPosition: &#39;outside&#39;
+	});
+}
+
+function resizeUploadContainer() {
+	if($(&#39;#upload&#39;).length) {
+		var val = (($(window).height() - $(&#39;#logo&#39;).outerHeight() - $(&#39;#upload&#39;).outerHeight()) / 2) * 0.6;
+		if(val &lt; 100) { val = 100; }
+		$(&#39;.infobox&#39;).css(&#39;margin-top&#39;, val+&#39;px&#39;);
+	}
+	resizeHtml();
+}
+
+function loadImagemapGenerator(width, height) {
+	$(&#39;#mapContainer img&#39;);
+	if(width == 0)
+		width = $(&#39;#mapContainer img&#39;).width();
+	if(height == 0)
+		height = $(&#39;#mapContainer img&#39;).height();
+	$(&#39;#newUpload&#39;).width(width-8);
+	$(&#39;#mapContainer&#39;).width(width*1.6);
+	widthTmp = (width &lt; 350) ? 364 : width;
+	widthTmp2 = (width &lt; 350) ? 350 : width;
+	$(&#39;div.form&#39;).width(widthTmp+4);
+	$(&#39;div.form input&#39;).width(widthTmp2-34);
+	width = (width &lt; 363) ? 363 : width;
+	$(&#39;div.form textarea&#39;).css({&#39;width&#39;: width-10});
+	$(&#39;#mapContainer&#39;).height(height);
+
+	resizeHtml();
+}
+
+function resizeHtml() {
+	var current, height;
+	$.each($(&#39;.infobox&#39;), function() {
+		if($(this).css(&#39;display&#39;) != &#39;none&#39;)
+		current = $(this);
+	});
+
+	if(typeof(current) == &#39;undefined&#39;) {
+		height = $(&#39;#imagemap4posis&#39;).outerHeight() + $(&#39;#header&#39;).outerHeight();
+	} else {
+		height = $(current).outerHeight(true) + $(&#39;#header&#39;).outerHeight();
+	}
+
+	if((typeof(current) == &#39;undefined&#39; &amp;&amp; height &gt; $(window).height())
+		|| (typeof(current) != &#39;undefined&#39; &amp;&amp; height &gt; $(window).height())) {
+		$(&#39;html&#39;).height(height);
+		$(&#39;footer&#39;).css(&#39;top&#39;, height - 30 +&#39;px&#39;);
+	} else if(typeof(current) != &#39;undefined&#39;) {
+		$(&#39;html&#39;).height(&#39;100%&#39;);
+		$(&#39;footer&#39;).css(&#39;top&#39;, $(window).height() - 30 +&#39;px&#39;);
+	}
+}
+
+function removeOldMapAndValues() {
+	if($(&#39;.imgmapMainImage&#39;).hasClass(&#39;maphilighted&#39;)) {
+		$(&#39;#mapContainer&#39;).append($(&#39;.imgmapMainImage&#39;));
+		$(&#39;#mapContainer&#39;).children(&#39;div&#39;).remove();
+		$(&#39;.imgmapMainImage&#39;).removeClass(&#39;maphilighted&#39;).css(&#39;opacity&#39;, 1);
+		$(&#39;#dots&#39;).empty();
+		$(&#39;#coordsText&#39;).val(&#39;&#39;);
+		$(&#39;#areaText&#39;).val(&#39;&#39;);
+		$(&#39;#map&#39;).children(&#39;area&#39;).remove();
+	}
+}
+function removeErrorMessage() {
+	$(&#39;#urlMessage&#39;).hide();
+}
+function enterImagelinkForm() {
+	removeErrorMessage();
+	var url = $(&#39;#imageurl&#39;).val().trim();
+	var error = true;
+
+	var urlBegin = url.substr(0, 4);
+	if(urlBegin == &#39;http&#39; || urlBegin == &#39;www.&#39;)
+		error = false;
+
+	var parts = url.split(&#39;.&#39;);
+	var ext = parts[parts.length-1].toLowerCase();
+	if(ext == &#39;gif&#39; || ext == &#39;jpg&#39; || ext == &#39;jpeg&#39; || ext == &#39;png&#39; || ext == &#39;tif&#39; || ext == &#39;tiff&#39; || ext == &#39;bmp&#39;)
+		error = false;
+
+	error = false;
+	if(error == false) {
+		$(&#39;#imagemap4posis #mapContainer&#39;).find(&#39;img&#39;).attr(&#39;src&#39;, url);
+		removeOldMapAndValues();
+		jQuery.ajax({
+			type: &#39;POST&#39;,
+			url: &#39;upload_ident.php&#39;,
+			data: {&#39;file&#39;: url, &#39;width&#39;: 0, &#39;height&#39;: 0},
+			//data: {&#39;data&#39;: &#39;[true, &quot;&#39;+url+&#39;&quot;, 0, 0]&#39;},
+			dataType : &#39;json&#39;
+		});
+		$(&#39;#navi&#39;).attr(&#39;currentValue&#39;, &#39;#imagemap4posis&#39;);
+		$(&#39;#upload&#39;).slideUp(400, function() {
+			$(&#39;#uploadUndo, #uploadUndo2&#39;).show();
+			$(&#39;#imagemap4posis&#39;).slideDown(400, function() {
+				resizeHtml();
+
+				// not correct loaded yet?
+				setTimeout(function() {
+					loadImagemapGenerator();
+				}, 300);
+
+				setTimeout(function() {
+					if($(&#39;#main&#39;).width() &lt;= 20 &amp;&amp; $(&#39;#main&#39;).height() &lt;= 20)
+						$(&#39;#urlMessage&#39;).slideDown(600);
+				}, 1000);
+
+			});
+			loadImagemapGenerator(0, 0);
+		});
+	} else {
+		$(&#39;a.imageurl_submit&#39;).parent().find(&#39;.error&#39;).remove();
+		$(&#39;a.imageurl_submit&#39;).after(&#39;&lt;p class=&quot;error hidden&quot;&gt;Incorrect input (Example: www. [...] .jpg / .png / .gif)&lt;/p&gt;&#39;);
+		$(&#39;a.imageurl_submit&#39;).parent().find(&#39;.error&#39;).slideDown(400).delay(5000).slideUp(400, function(){ $(this).remove(); });
+	}
+}
+</pre>
+</body>
+</html>
